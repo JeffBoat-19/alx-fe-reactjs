@@ -1,17 +1,8 @@
 function MainContent() {
   return (
-    <main
-      style={{
-        padding: "20px",
-        backgroundColor: "#eef2f3",
-        minHeight: "200px",
-      }}
-    >
-      <h2 style={{ color: "darkslategray" }}>Welcome to the City Explorer</h2>
-      <p style={{ lineHeight: "1.6" }}>
-        Here you can learn about different cities, their cultures, and why they
-        are special.
-      </p>
+    <main style={{ padding: "10px", backgroundColor: "#f0f0f0" }}>
+      <h2>Main Content</h2>
+      <p>This is where the main content goes.</p>
     </main>
   );
 }
