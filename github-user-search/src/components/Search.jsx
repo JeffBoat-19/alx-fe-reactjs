@@ -1,86 +1,225 @@
-import { useState } from "react";
-import { fetchUserData, fetchAdvancedUsers } from "../services/githubService";
+import React, { useState } from "react";
+import { searchGithubUsers, fetchUserData } from "../services/githubService";
 
-function Search() {
+export default function Search() {
   const [query, setQuery] = useState("");
-  const [users, setUsers] = useState([]); // store multiple results
+  const [location, setLocation] = useState("");
+  const [minRepos, setMinRepos] = useState("");
+  const [perPage, setPerPage] = useState(10);
+  const [results, setResults] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
+  async function doSearch({ nextPage = 1, append = false } = {}) {
+    setHasSearched(true);
+    setError(null);
+    const isFresh = nextPage === 1 && !append;
+    if (
+      isFresh &&
+      !query.trim() &&
+      !location.trim() &&
+      (!minRepos || Number(minRepos) <= 0)
+    ) {
+      setError(
+        "Please enter a username, location, or minimum repos to search."
+      );
+      return;
+    }
+
     setLoading(true);
-    setError("");
-    setUsers([]);
-
     try {
-      // For now we’ll just call advanced search (works for both)
-      const results = await fetchAdvancedUsers(query);
-      if (results.length === 0) {
-        setError("Looks like we cant find the user");
-      } else {
-        setUsers(results);
-      }
+      const resp = await searchGithubUsers({
+        query,
+        location,
+        minRepos: minRepos ? Number(minRepos) : 0,
+        page: nextPage,
+        per_page: perPage,
+      });
+
+      setTotal(resp.total_count || 0);
+      setPage(nextPage);
+
+      if (append) setResults((prev) => [...prev, ...(resp.items || [])]);
+      else setResults(resp.items || []);
     } catch (err) {
-      setError("Looks like we cant find the user");
+      setError(err?.message || "Search failed");
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  // uses fetchUserData from service to fetch full user info on demand
+  async function viewUser(username) {
+    try {
+      const data = await fetchUserData(username);
+
+      alert(
+        `${data.login}\nLocation: ${data.location || "N/A"}\nRepos: ${
+          data.public_repos ?? "N/A"
+        }`
+      );
+    } catch (err) {
+      console.error("[Search] viewUser error:", err);
+      alert("Failed to load user details.");
+    }
+  }
 
   return (
-    <div className="max-w-xl mx-auto p-4">
-      {/* Search Form */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search GitHub users..."
-          className="flex-grow px-3 py-2 border rounded-lg"
-        />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-        >
-          Search
-        </button>
+    <div className="max-w-3xl mx-auto p-4">
+      <form
+        className="bg-white shadow rounded-lg p-4 grid grid-cols-1 gap-4 sm:grid-cols-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          doSearch({ nextPage: 1, append: false });
+        }}
+      >
+        <div className="sm:col-span-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Username / Query
+          </label>
+          <input
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            type="text"
+            placeholder="octocat or any query"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Location
+          </label>
+          <input
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            type="text"
+            placeholder="San Francisco"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Min repos
+          </label>
+          <input
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            type="number"
+            min="0"
+            placeholder="0"
+            value={minRepos}
+            onChange={(e) => setMinRepos(e.target.value)}
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Results per page
+          </label>
+          <select
+            className="mt-1 block w-40 rounded-md border-gray-300 shadow-sm"
+            value={perPage}
+            onChange={(e) => setPerPage(Number(e.target.value))}
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={30}>30</option>
+          </select>
+        </div>
+
+        <div className="sm:col-span-1 flex items-center justify-center gap-10">
+          <button
+            type="submit"
+            className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            disabled={loading}
+          >
+            {loading ? "Searching..." : "Search"}
+          </button>
+        </div>
       </form>
 
-      {/* Loading state */}
-      {loading && <p>Loading...</p>}
+      <div className="mt-6">
+        {error && <div className="text-red-600 mb-4">{error}</div>}
 
-      {/* Error state */}
-      {error && <p className="text-red-500">{error}</p>}
+        <div className="text-sm text-gray-600 mb-2">Total results: {total}</div>
 
-      {/* Results list */}
-      <div className="grid gap-4">
-        {users.map((user) => (
-          <div
-            key={user.id}
-            className="flex items-center gap-4 p-4 border rounded-lg shadow-sm"
-          >
-            <img
-              src={user.avatar_url}
-              alt={user.login}
-              className="w-16 h-16 rounded-full"
-            />
-            <div>
-              <h2 className="text-lg font-semibold">{user.login}</h2>
-              <a
-                href={user.html_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                View Profile
-              </a>
-            </div>
+        {hasSearched && !loading && !error && results.length === 0 && (
+          <div className="text-center text-gray-600 mt-4">
+            Looks like we cant find the user.
           </div>
-        ))}
+        )}
+
+        <ul className="space-y-4">
+          {results.map((user) => {
+            const details = user.details || {};
+            return (
+              <li
+                key={user.id}
+                className="flex items-center bg-white shadow rounded-lg p-3"
+              >
+                <img
+                  src={user.avatar_url}
+                  alt={user.login}
+                  className="w-12 h-12 rounded-full mr-4"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <a
+                      href={user.html_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-indigo-600 font-medium truncate"
+                    >
+                      {user.login}
+                    </a>
+                    <div className="text-sm text-gray-500">
+                      Score:{" "}
+                      {typeof user.score === "number"
+                        ? user.score.toFixed(2)
+                        : "-"}
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    <span>{details.location || "Location not available"}</span>
+                    <span className="mx-2">•</span>
+                    <span>
+                      {details.public_repos != null
+                        ? `${details.public_repos} repos`
+                        : "Repos unknown"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="ml-4">
+                  <button
+                    onClick={() => viewUser(user.login)}
+                    className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-50"
+                    type="button"
+                  >
+                    Details
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        {results.length > 0 && results.length < total && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => doSearch({ nextPage: page + 1, append: true })}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium bg-white hover:bg-gray-50"
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "Load more"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
-export default Search;
