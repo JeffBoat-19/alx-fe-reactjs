@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "title": "Spaghetti Carbonara",
+    "summary": "Classic Italian pasta with eggs, cheese, bacon, and black pepper.",
+    "image": "https://via.placeholder.com/150"
+  },
+  {
+    "id": 2,
+    "title": "Chicken Tikka Masala",
+    "summary": "Grilled chicken cooked in a creamy tomato-based sauce.",
+    "image": "https://via.placeholder.com/150"
+  }
+]
