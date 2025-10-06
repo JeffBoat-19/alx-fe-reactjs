@@ -4,9 +4,9 @@ function AddRecipeForm() {
   const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [errors, setErrors] = useState({}); // ✅ required
+  const [steps, setSteps] = useState(""); // ✅ new field
+  const [errors, setErrors] = useState({});
 
-  // ✅ validation function
   const validate = () => {
     let newErrors = {};
 
@@ -14,8 +14,9 @@ function AddRecipeForm() {
     if (!ingredients.trim()) newErrors.ingredients = "Ingredients are required";
     if (!instructions.trim())
       newErrors.instructions = "Instructions are required";
+    if (!steps.trim()) newErrors.steps = "Steps are required"; // ✅ validate steps
 
-    setErrors(newErrors); // ✅ update errors
+    setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -23,13 +24,18 @@ function AddRecipeForm() {
     e.preventDefault();
 
     if (validate()) {
-      // ✅ valid form, handle submission
-      console.log("Form submitted:", { title, ingredients, instructions });
+      console.log("Form submitted:", {
+        title,
+        ingredients,
+        instructions,
+        steps,
+      });
 
-      // Clear form
+      // clear form
       setTitle("");
       setIngredients("");
       setInstructions("");
+      setSteps("");
       setErrors({});
     }
   };
@@ -75,6 +81,19 @@ function AddRecipeForm() {
           ></textarea>
           {errors.instructions && (
             <p className="text-red-500 text-sm">{errors.instructions}</p>
+          )}
+        </div>
+
+        {/* Steps ✅ */}
+        <div>
+          <label className="block font-semibold mb-1">Steps</label>
+          <textarea
+            value={steps}
+            onChange={(e) => setSteps(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          ></textarea>
+          {errors.steps && (
+            <p className="text-red-500 text-sm">{errors.steps}</p>
           )}
         </div>
 
