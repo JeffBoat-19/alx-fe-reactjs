@@ -1,52 +1,51 @@
+import React, { useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  Link,
 } from "react-router-dom";
+import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
-import About from "./pages/About";
-import Profile from "./pages/Profile";
-import BlogPost from "./pages/BlogPost";
 import Login from "./pages/Login";
-import ProtectedRoute from "./components/ProtectedRoute";
+import Profile from "./assets/Profile";
+import ProfileDetails from "./pages/ProfileDetails";
+import ProfileSettings from "./pages/ProfileSettings";
+import Posts from "./pages/Posts";
+import PostDetail from "./pages/PostDetail";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
-function App() {
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   return (
     <Router>
-      <nav style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
-        <Link to="/">Home</Link>
-        <Link to="/about">About</Link>
-        <Link to="/profile">Profile</Link>
-        <Link to="/blog/1">Blog Post 1</Link>
-      </nav>
-
+      <Navbar
+        isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
+      />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-
-        {/* Protected Profile route */}
         <Route
-          path="/profile/*"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
+          path="/login"
+          element={<Login setIsAuthenticated={setIsAuthenticated} />}
         />
 
-        {/* Dynamic Blog Post route */}
-        <Route path="/blog/:postId" element={<BlogPost />} />
+        {/* Protected route wrapper */}
+        <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+          <Route path="/profile" element={<Profile />}>
+            <Route path="details" element={<ProfileDetails />} />
+            <Route path="settings" element={<ProfileSettings />} />
+          </Route>
+        </Route>
 
-        {/* Login page */}
-        <Route path="/login" element={<Login />} />
+        {/* Dynamic Routing for Blog Posts */}
+        <Route path="/posts" element={<Posts />} />
+        <Route path="/posts/:id" element={<PostDetail />} />
 
-        {/* Redirect unknown routes */}
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* Fallback route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
 }
-
-export default App;
