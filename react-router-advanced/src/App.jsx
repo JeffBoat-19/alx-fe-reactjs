@@ -39,8 +39,8 @@ export default function App() {
         </Route>
 
         {/* Dynamic Routing for Blog Posts */}
-        <Route path="/posts" element={<Posts />} />
-        <Route path="/posts/:id" element={<PostDetail />} />
+        <Route path="/blog" element={<Posts />} />
+        <Route path="/blog/:id" element={<BlogPost />} />
 
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />
