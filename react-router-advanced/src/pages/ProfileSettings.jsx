@@ -1,11 +1,11 @@
 import React from "react";
 
-export default function ProfileDetails() {
+export default function ProfileSettings() {
   return (
     <div>
-      <h3>Profile Details</h3>
-      <p>Username: Eben</p>
-      <p>Email: eben@example.com</p>
+      <h3>Profile Settings</h3>
+      <p>Notification: Enabled</p>
+      <p>Theme: Light</p>
     </div>
   );
 }
